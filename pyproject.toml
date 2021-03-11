@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "rpi-build-from-docker"
+version = "0.1.0"
+description = ""
+authors = ["Jono Hill <jono@hillnz.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+aiohttp = "^3.7.3"
+humanize = "^3.2.0"
+# Currently unavailable on pypi
+guestfs = { url = "https://download.libguestfs.org/python/guestfs-1.40.2.tar.gz", platform = "linux" }
+typer = "^0.3.2"
+docker = "^4.4.1"
+pydantic = "^1.7.3"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

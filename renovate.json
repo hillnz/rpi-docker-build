@@ -1,0 +1,18 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "regexManagers": [
+        {
+            "fileMatch": ["^pyproject.toml$"],
+            "matchStrings": [ "\"https://download.libguestfs.org/python/guestfs-(?<currentValue>.+?).tar.gz\"" ],
+            "depNameTemplate": "debian_stable/libguestfs",
+            "datasourceTemplate": "repology"
+        },
+        {
+            "fileMatch": [ "^Dockerfile$", "^.*\\.sh$" ],
+            "matchStrings": [
+              "datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?\\s(?:ARG|export) .*?_VERSION=(?<currentValue>.*)\\s"
+            ],
+            "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+        }
+    ]
+}

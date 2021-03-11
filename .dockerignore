@@ -1,0 +1,6 @@
+.*
+*.tar
+Dockerfile
+*.gz
+*.img
+*.md
