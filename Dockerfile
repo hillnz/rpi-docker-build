@@ -1,12 +1,12 @@
-FROM python:3.9.2 AS base
-
-FROM base AS deps
+# renovate: datasource=docker depName=python
+ARG PYTHON_VERSION=3.9.2
+FROM --platform=${BUILDPLATFORM} python:${PYTHON_VERSION} AS deps
 
 RUN pip install poetry
 COPY pyproject.toml poetry.lock ./
 RUN poetry export --without-hashes -f requirements.txt >/tmp/requirements.txt
 
-FROM base
+FROM python:${PYTHON_VERSION}
 
 RUN apt-get update && apt-get install -y \
     libguestfs-dev \
