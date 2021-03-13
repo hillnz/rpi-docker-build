@@ -1,9 +1,7 @@
 version: '3'
 services:
   build:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: jonoh/rpi-docker-build
     volumes: 
       - .:/build
       - /var/run/docker.sock:/var/run/docker.sock

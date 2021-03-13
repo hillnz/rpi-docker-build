@@ -16,8 +16,7 @@ Or you can run in Docker (see below).
 
 Ensure you run within the virtualenv (such as with `poetry run ./build.py`).
 
-Alternatively, run in Docker with `docker-compose run build`.
-A pre-built image is available at `jonoh/rpi-docker-build`, you can modify `docker-compose.yml` if you'd like to use this instead of building it yourself.
+Alternatively, run in Docker with `docker-compose run build`. This uses a pre-built image (`jonoh/rpi-docker-build`).
 
 ```
 Usage: build.py [OPTIONS] OUTPUT_IMAGE [OUTPUT_BOOT_FILES]
