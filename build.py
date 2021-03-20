@@ -163,6 +163,27 @@ async def export_docker_to_mount(gfs, docker_image, mount_point):
         for t in asyncio.as_completed((export_task, import_task)):
             await t
 
+def update_fstab(gfs, root_uuid, boot_uuid, data_uuid):
+    log.info('Updating fstab...')
+    FSTAB_PATH = '/etc/fstab'
+    new_fstab = ''
+    for line in gfs.read_lines(FSTAB_PATH):
+        parts = line.split()
+        mount = ''
+        remainder = ''
+        if len(parts) >= 2:
+            mount = parts[1]
+            remainder = ' '.join(parts[1:]) + '\n'
+        if mount == '/':
+            new_fstab += f'PARTUUID={root_uuid} {remainder}'
+        elif mount == '/boot':
+            new_fstab += f'PARTUUID={boot_uuid} {remainder}'
+        else:
+            new_fstab += line + '\n'
+    if data_uuid:
+        new_fstab += f'PARTUUID={data_uuid} /data vfat defaults 0 2\n'
+    gfs.write(FSTAB_PATH, new_fstab)                    
+
 async def convert_docker_to_rpi_image(docker_image: str, full_disk: bool, b_part: bool, data_part: bool, output_gzip: str, output_boot: str):
     docker_api = docker_py.api.APIClient()
     try:
@@ -180,6 +201,9 @@ async def convert_docker_to_rpi_image(docker_image: str, full_disk: bool, b_part
         else:
             image_file = output_gzip
 
+        boot_uuid = get_partuuid(image_file, 1)
+        root_uuid = get_partuuid(image_file, 2)
+        data_uuid = get_partuuid(image_file, 4) if data_part else None
         if full_disk:
             partitions = [
                 # size              format      label
@@ -191,9 +215,6 @@ async def convert_docker_to_rpi_image(docker_image: str, full_disk: bool, b_part
             if data_part:
                 partitions.append((DATA_PART_SIZE,    'vfat',    'data'))
             with create_disk_image_file(image_file, *partitions) as gfs:
-                boot_uuid = get_partuuid(image_file, 1)
-                root_uuid = get_partuuid(image_file, 2)
-                data_uuid = get_partuuid(image_file, 4)
                 log.info(f'PARTUUIDs: boot {boot_uuid}, root {root_uuid}, data {data_uuid}')
 
                 log.info('Copying from Docker image...')
@@ -205,25 +226,7 @@ async def convert_docker_to_rpi_image(docker_image: str, full_disk: bool, b_part
                 gfs.mount(part_device(4), '/data')
                 gfs.write('/data/.configure_me', '')
 
-                # Update fstab
-                log.info('Updating fstab...')
-                FSTAB_PATH = '/etc/fstab'
-                new_fstab = ''
-                for line in gfs.read_lines(FSTAB_PATH):
-                    parts = line.split()
-                    mount = ''
-                    remainder = ''
-                    if len(parts) >= 2:
-                        mount = parts[1]
-                        remainder = ' '.join(parts[1:]) + '\n'
-                    if mount == '/':
-                        new_fstab += f'PARTUUID={root_uuid} {remainder}'
-                    elif mount == '/boot':
-                        new_fstab += f'PARTUUID={boot_uuid} {remainder}'
-                    else:
-                        new_fstab += line + '\n'
-                gfs.write(FSTAB_PATH, new_fstab)
-                gfs.write_append(FSTAB_PATH, f'PARTUUID={data_uuid} /data vfat defaults 0 2\n')
+                update_fstab(gfs, root_uuid, boot_uuid, data_uuid)
 
                 # Copy boot files
                 log.info('Preparing boot partition...')
@@ -259,6 +262,8 @@ async def convert_docker_to_rpi_image(docker_image: str, full_disk: bool, b_part
                     gfs.tar_out('/boot', output_boot, compress='gzip' if USE_GZ else None)
                 gfs.rm_rf('/boot')
                 gfs.mkdir('/boot')
+                # There is no MBR, these will be psuedo ids that need to be updated by the flasher
+                update_fstab(gfs, root_uuid, boot_uuid, data_uuid)
 
         if USE_GZ:
             log.info('Compressing output...')
