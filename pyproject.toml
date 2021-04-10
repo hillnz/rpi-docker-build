@@ -11,7 +11,7 @@ humanize = "^3.2.0"
 # Currently unavailable on pypi
 guestfs = { url = "https://download.libguestfs.org/python/guestfs-1.40.2.tar.gz", platform = "linux" }
 typer = "^0.3.2"
-docker = "^4.4.1"
+docker = "^5.0.0"
 pydantic = "^1.7.3"
 
 [tool.poetry.dev-dependencies]
