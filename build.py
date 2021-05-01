@@ -3,11 +3,11 @@
 import asyncio
 import functools
 import gzip
+import hashlib
 import logging
 import os
 import struct
 import sys
-import tarfile
 from contextlib import contextmanager
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -140,17 +140,19 @@ async def export_docker_image(image_name, out_tar_file):
             container.remove()
     await asyncio.to_thread(_export)
 
-def gzip_file(input_file, output_gzip):
+async def gzip_file(input_file, output_gzip):
 
     @periodic(5)
     def log_progress(written):
-        log.info(f' {humanize.naturalsize(written, format="%.2f")} compressed')
+        log.info(f' {output_gzip}: {humanize.naturalsize(written, format="%.2f")} compressed')
 
     with gzip.open(output_gzip, 'wb') as gz_f:
         with open(input_file, 'rb') as in_f:
             written = 0
             while chunk := in_f.read(64 * 1024):
+                await asyncio.sleep(0)
                 gz_f.write(chunk)
+                await asyncio.sleep(0)
                 written += len(chunk)
                 log_progress(written)
 
@@ -184,7 +186,21 @@ def update_fstab(gfs, root_uuid, boot_uuid, data_uuid):
         new_fstab += f'PARTUUID={data_uuid} /data vfat defaults 0 2\n'
     gfs.write(FSTAB_PATH, new_fstab)                    
 
-async def convert_docker_to_rpi_image(docker_image: str, full_disk: bool, b_part: bool, data_part: bool, output_gzip: str, output_boot: str):
+async def sha256sum(input, output, name):
+    COPY_BUFSIZE = 64 * 1024
+    sha = hashlib.sha256()
+    with open(input, 'rb') as in_f:
+        while True:
+            chunk = in_f.read(COPY_BUFSIZE)
+            await asyncio.sleep(0)
+            if not chunk:
+                break
+            sha.update(chunk)
+            await asyncio.sleep(0)
+    with open(output, 'w') as out_f:
+        out_f.write(f'{sha.hexdigest()}  {name}\n')
+
+async def convert_docker_to_rpi_image(docker_image: str, full_disk: bool, b_part: bool, data_part: bool, output_gzip: str, output_boot: str, hash_files: bool):
     docker_api = docker_py.api.APIClient()
     try:
         os_part_size = int(docker_api.inspect_image(docker_image)['Size'] * OS_PART_SIZE_OVERHEAD)
@@ -198,8 +214,12 @@ async def convert_docker_to_rpi_image(docker_image: str, full_disk: bool, b_part
     with temp_dir() as tmp:
         if USE_GZ:
             image_file = os.path.join(tmp, 'image')
+            if output_boot:
+                boot_tar = os.path.join(tmp, 'boot')
         else:
             image_file = output_gzip
+            if output_boot:
+                boot_tar = output_boot
 
         if full_disk:
             partitions = [
@@ -249,7 +269,7 @@ async def convert_docker_to_rpi_image(docker_image: str, full_disk: bool, b_part
                     gfs.write(cmdline_path, ' '.join(cmdline).encode())
 
                     if output_boot:
-                        gfs.tar_out(BOOT_DIR, output_boot, compress='gzip' if USE_GZ else None)
+                        gfs.tar_out(BOOT_DIR, boot_tar)
                 finally:
                     gfs.umount(boot_dev)
                     gfs.rm_rf(BOOT_DIR)
@@ -259,18 +279,32 @@ async def convert_docker_to_rpi_image(docker_image: str, full_disk: bool, b_part
                 gfs.mount(GFS_DEVICE, '/')
                 await export_docker_to_mount(gfs, docker_image, '/')
                 if output_boot:
-                    gfs.tar_out('/boot', output_boot, compress='gzip' if USE_GZ else None)
+                    gfs.tar_out('/boot', boot_tar)
                 gfs.rm_rf('/boot')
                 gfs.mkdir('/boot')
                 # There is no MBR, these will be psuedo ids that need to be updated by the flasher
                 boot_uuid = get_partuuid(image_file, 1)
                 root_uuid = get_partuuid(image_file, 2)
-                data_uuid = get_partuuid(image_file, 4) if data_part else None                
+                data_uuid = get_partuuid(image_file, 4) if data_part else None
                 update_fstab(gfs, root_uuid, boot_uuid, data_uuid)
+
+        if hash_files:
+            log.info('Hashing files...')
+            HASH_SUFFIX = '.sha256'
+            def get_hash_params(f_name):
+                path = f_name.removesuffix('.gz')
+                return path + HASH_SUFFIX, os.path.basename(path)
+            os_task = asyncio.create_task(sha256sum(image_file, *get_hash_params(output_gzip)))
+            if output_boot:
+                await sha256sum(boot_tar, *get_hash_params(output_boot))
+            await os_task
 
         if USE_GZ:
             log.info('Compressing output...')
-            gzip_file(image_file, output_gzip)
+            os_task = asyncio.create_task(gzip_file(image_file, output_gzip))
+            if output_boot:
+                await gzip_file(boot_tar, output_boot)
+            await os_task
 
     log.info('Done')
 
@@ -300,11 +334,12 @@ async def build(
     partitions: bool = typer.Option(True, is_flag=True, help='Create a full flashable image with partitions, else just an OS FS image.'),
     b_partition: bool = typer.Option(False, is_flag=True, help='Include a second (blank) OS partition in the image (for a/b flashing)'),
     data_partition: bool = typer.Option(False, is_flag=True, help='Include a FAT partition for data'),
+    hashes: bool = typer.Option(True, is_flag=True, help='Also produce sha256sum files (these are pre-compression hashes).')
 ):
     """Convert a Docker image to a Raspberry Pi image."""
     if not docker_image:
         docker_image = build_docker_image(docker_file)
-    await convert_docker_to_rpi_image(docker_image, partitions, b_partition, data_partition, output_image, output_boot_files)
+    await convert_docker_to_rpi_image(docker_image, partitions, b_partition, data_partition, output_image, output_boot_files, hashes)
 
 app = typer.Typer(add_completion=False)
 app.command()(build)
