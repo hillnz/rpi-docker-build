@@ -221,6 +221,18 @@ async def convert_docker_to_rpi_image(docker_image: str, full_disk: bool, b_part
             if output_boot:
                 boot_tar = output_boot
 
+        def export_boot():
+            if output_boot:
+                if hash_files:
+                    # Change e.g. boot.tar.gz to boot.sha256
+                    hash_name = output_boot
+                    ext = hash_name
+                    while ext:
+                        hash_name, ext = os.path.splitext(hash_name)
+                    hash_name += '.sha256'
+                    gfs.checksums_out('sha256', '/boot', hash_name)
+                gfs.tar_out('/boot', boot_tar)
+
         if full_disk:
             partitions = [
                 # size              format      label
@@ -267,19 +279,16 @@ async def convert_docker_to_rpi_image(docker_image: str, full_disk: bool, b_part
                             cmdline[n] = f'root=PARTUUID={root_uuid}'
                             break
                     gfs.write(cmdline_path, ' '.join(cmdline).encode())
-
-                    if output_boot:
-                        gfs.tar_out(BOOT_DIR, boot_tar)
+                    export_boot()
                 finally:
                     gfs.umount(boot_dev)
                     gfs.rm_rf(BOOT_DIR)
 
-        else:
+        else: # no partitions
             with create_image_file(image_file, 'ext4', os_part_size) as gfs:
                 gfs.mount(GFS_DEVICE, '/')
                 await export_docker_to_mount(gfs, docker_image, '/')
-                if output_boot:
-                    gfs.tar_out('/boot', boot_tar)
+                export_boot()
                 gfs.rm_rf('/boot')
                 gfs.mkdir('/boot')
                 # There is no MBR, these will be psuedo ids that need to be updated by the flasher
@@ -289,15 +298,11 @@ async def convert_docker_to_rpi_image(docker_image: str, full_disk: bool, b_part
                 update_fstab(gfs, root_uuid, boot_uuid, data_uuid)
 
         if hash_files:
-            log.info('Hashing files...')
-            HASH_SUFFIX = '.sha256'
-            def get_hash_params(f_name):
-                path = f_name.removesuffix('.gz')
-                return path + HASH_SUFFIX, os.path.basename(path)
-            os_task = asyncio.create_task(sha256sum(image_file, *get_hash_params(output_gzip)))
-            if output_boot:
-                await sha256sum(boot_tar, *get_hash_params(output_boot))
-            await os_task
+            log.info('Hashing...')
+            base_path = output_gzip.removesuffix('.gz')
+            hash_name = base_path + '.sha256'
+            base_name = os.path.basename(base_path)
+            await sha256sum(image_file, hash_name, base_name)
 
         if USE_GZ:
             log.info('Compressing output...')
