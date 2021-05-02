@@ -140,3 +140,4 @@ cython_debug/
 *.tar
 *.gz
 *.img
+*.sha*
