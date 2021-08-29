@@ -22,8 +22,8 @@ import typer
 log = logging.getLogger('build')
 logging.basicConfig(level='INFO')
 
-BOOT_PART_SIZE = 100 * 1024**2
-DATA_PART_SIZE = 100 * 1024**2
+BOOT_PART_SIZE = 250 * 1024**2
+DATA_PART_SIZE = 250 * 1024**2
 OS_PART_SIZE_OVERHEAD = 1.5
 SECTOR_SIZE = 512
 
