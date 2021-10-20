@@ -1,5 +1,5 @@
 # renovate: datasource=docker depName=python
-ARG PYTHON_VERSION=3.9.5
+ARG PYTHON_VERSION=3.10.0
 FROM --platform=${BUILDPLATFORM} python:${PYTHON_VERSION} AS deps
 
 RUN pip install poetry
