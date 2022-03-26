@@ -86,11 +86,11 @@ url = "https://download.libguestfs.org/python/guestfs-1.40.2.tar.gz"
 
 [[package]]
 name = "humanize"
-version = "3.2.0"
+version = "4.0.0"
 description = "Python humanize utilities"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.extras]
 tests = ["freezegun", "pytest", "pytest-cov"]
@@ -205,7 +205,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "7b1d3092542098ad0f0bb5b892f88f5b5c26ac55e61c3f92e74134d02a58a56e"
+content-hash = "98a45c9016aa5575c0359d6698ade759c5677d3e1a5b1e7486439dab96bc0bc9"
 
 [metadata.files]
 aiohttp = [
@@ -269,8 +269,8 @@ docker = [
 ]
 guestfs = []
 humanize = [
-    {file = "humanize-3.2.0-py3-none-any.whl", hash = "sha256:d47d80cd47c1511ed3e49ca5f10c82ed940ea020b45b49ab106ed77fa8bb9d22"},
-    {file = "humanize-3.2.0.tar.gz", hash = "sha256:ab69004895689951b79f2ae4fdd6b8127ff0c180aff107856d5d98119a33f026"},
+    {file = "humanize-4.0.0-py3-none-any.whl", hash = "sha256:8d86333b8557dacffd4dce1dbe09c81c189e2caf7bb17a970b2212f0f58f10f2"},
+    {file = "humanize-4.0.0.tar.gz", hash = "sha256:ee1f872fdfc7d2ef4a28d4f80ddde9f96d36955b5d6b0dac4bdeb99502bddb00"},
 ]
 idna = [
     {file = "idna-3.1-py3-none-any.whl", hash = "sha256:5205d03e7bcbb919cc9c19885f9920d622ca52448306f2377daede5cf3faac16"},
