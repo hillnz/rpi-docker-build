@@ -314,14 +314,14 @@ url = "https://download.libguestfs.org/python/guestfs-1.40.2.tar.gz"
 
 [[package]]
 name = "humanize"
-version = "4.0.0"
+version = "4.6.0"
 description = "Python humanize utilities"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "humanize-4.0.0-py3-none-any.whl", hash = "sha256:8d86333b8557dacffd4dce1dbe09c81c189e2caf7bb17a970b2212f0f58f10f2"},
-    {file = "humanize-4.0.0.tar.gz", hash = "sha256:ee1f872fdfc7d2ef4a28d4f80ddde9f96d36955b5d6b0dac4bdeb99502bddb00"},
+    {file = "humanize-4.6.0-py3-none-any.whl", hash = "sha256:401201aca462749773f02920139f302450cb548b70489b9b4b92be39fe3c3c50"},
+    {file = "humanize-4.6.0.tar.gz", hash = "sha256:5f1f22bc65911eb1a6ffe7659bd6598e33dcfeeb904eb16ee1e705a09bf75916"},
 ]
 
 [package.extras]
