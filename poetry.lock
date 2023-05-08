@@ -195,14 +195,14 @@ files = [
 
 [[package]]
 name = "docker"
-version = "6.1.0"
+version = "6.1.1"
 description = "A Python library for the Docker Engine API."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "docker-6.1.0-py3-none-any.whl", hash = "sha256:b65c999f87cb5c31700b6944dc17a631071170d1aab3ad6e23506068579f885d"},
-    {file = "docker-6.1.0.tar.gz", hash = "sha256:cb697eccfeff55d232f7a7f4f88cd3770d27327c38d6c266b8f55c9f14a8491e"},
+    {file = "docker-6.1.1-py3-none-any.whl", hash = "sha256:8308b23d3d0982c74f7aa0a3abd774898c0c4fba006e9c3bde4f68354e470fe2"},
+    {file = "docker-6.1.1.tar.gz", hash = "sha256:5ec18b9c49d48ee145a5b5824bb126dc32fc77931e18444783fc07a7724badc0"},
 ]
 
 [package.dependencies]
