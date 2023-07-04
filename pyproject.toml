@@ -12,7 +12,7 @@ humanize = "^4.0.0"
 guestfs = { url = "https://download.libguestfs.org/python/guestfs-1.40.2.tar.gz", platform = "linux" }
 typer = "^0.9.0"
 docker = "^6.0.0"
-pydantic = "^1.7.3"
+pydantic = "^2.0.0"
 
 [tool.poetry.dev-dependencies]
 
